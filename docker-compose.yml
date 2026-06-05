@@ -64,7 +64,7 @@ services:
     volumes:
       - ./services/receiver-service/app:/app/app
 
-  # -------------------------------------
+# -------------------------------------
   # 4. Summarizer Service (NLP Worker)
   # -------------------------------------
   summarizer-service:
@@ -74,6 +74,7 @@ services:
     environment:
       - RECEIVER_API_URL=http://receiver-service:8000
       - KAFKA_BROKER_URL=kafka:9092
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}   # <--- Updated
     depends_on:
       - kafka
     volumes:
