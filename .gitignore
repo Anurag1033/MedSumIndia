@@ -1,0 +1,85 @@
+# ==========================================
+# 1. Environment Variables & Secrets
+# ==========================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ==========================================
+# 2. AI Models & Data Sets
+# ==========================================
+# Ignore downloaded LLM weights and temporary PDFs
+models/
+*.gguf
+*.bin
+*.pt
+*.safetensors
+*.pdf
+*.csv
+*.jsonl
+
+# ==========================================
+# 3. Infrastructure & Docker Volumes
+# ==========================================
+# Ignore local database and message broker persistence
+postgres_data/
+kafka_data/
+/tmp/kafka-logs/
+pgadmin/
+
+# ==========================================
+# 4. Python & Virtual Environments
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+
+# ==========================================
+# 5. Testing & Coverage
+# ==========================================
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+
+# ==========================================
+# 6. IDEs & OS Files
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
