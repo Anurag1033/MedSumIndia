@@ -23,26 +23,42 @@ services:
   # -------------------------------------
   # 2. Message Broker (Official Apache Kafka KRaft)
   # -------------------------------------
+  # Kafka Broker
   kafka:
-    image: apache/kafka:3.7.0
+    image: confluentinc/cp-kafka:7.4.0
     container_name: medsum_kafka
-    user: "root"      # <--- ADD THIS LINE
     ports:
       - "9092:9092"
     environment:
       KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-    volumes:
-      - kafka_data:/tmp/kafka-logs
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:29092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+
+  # Automation helper to provision the topic
+  init-kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - kafka
+    entrypoint: [ "/bin/sh", "-c" ]   # <--- Add the forward slash here
+    command: |
+      "
+      # Block until Kafka is ready
+      kafka-topics --bootstrap-server kafka:9092 --list
+      echo 'Creating Kafka topics...'
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic medical-docs --replication-factor 1 --partitions 1
+      echo 'Successfully provisioned topics.'
+      "
 
   # -------------------------------------
   # 3. Receiver Service (FastAPI)
@@ -63,6 +79,7 @@ services:
         condition: service_started
     volumes:
       - ./services/receiver-service/app:/app/app
+      - shared_storage:/app/storage
 
 # -------------------------------------
   # 4. Summarizer Service (NLP Worker)
@@ -79,7 +96,9 @@ services:
       - kafka
     volumes:
       - ./services/summarizer-service/app:/app/app
+      - shared_storage:/app/storage
 
 volumes:
   postgres_data:
   kafka_data:
+  shared_storage:
